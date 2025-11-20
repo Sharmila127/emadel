@@ -1,0 +1,1 @@
+export const selectProfile = (state: any) => state.FAqCategoriesSlice.data;

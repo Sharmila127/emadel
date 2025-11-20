@@ -1,0 +1,1 @@
+export const selectPayment = (state:any) => state.PaymentReducer.payment

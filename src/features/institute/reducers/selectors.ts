@@ -1,0 +1,1 @@
+export const selectInstitutes = (state: any) => state.InstituteReducer.institutes;

@@ -1,0 +1,1 @@
+export const helpcenterTicketSelect = (state: any) => state.HelpcenterTicketSlice.data

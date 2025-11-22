@@ -10,44 +10,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # 1️⃣ Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'  # Vite requires Node >= 20
-        cache: 'npm'
+      # 2️⃣ Use Node.js 20 (matches your package requirements)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
 
-    - name: Remove package-lock.json & node_modules
-      run: |
-        rm -f package-lock.json
-        rm -rf node_modules
+      # 3️⃣ Remove old lock and node_modules (clean start)
+      - name: Remove package-lock.json & node_modules
+        run: |
+          rm -f package-lock.json
+          rm -rf node_modules
 
-    - name: Clean npm cache
-      run: npm cache clean --force
+      # 4️⃣ Clean npm cache
+      - name: Clean npm cache
+        run: npm cache clean --force
 
-    - name: Install dependencies (ignore errors)
-      run: |
-        npm install --legacy-peer-deps --force || echo "Ignoring install errors"
+      # 5️⃣ Install dependencies ignoring errors
+      - name: Install dependencies (ignore errors)
+        run: npm install --legacy-peer-deps --force
 
-    - name: Build project (skip TS errors)
-      run: |
-        npx vite build || echo "Ignoring build errors"
+      # 6️⃣ Build project (ignore TS errors)
+      - name: Build project
+        run: |
+          npx tsc --skipLibCheck || echo "Skipping TS errors"
+          npx vite build
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1  # change if needed
+      # 7️⃣ Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-    - name: Sync dist/ folder to S3
-      run: |
-        aws s3 sync dist/ s3://front-end-eflow --delete || echo "Ignoring S3 sync errors"
+      # 8️⃣ Sync dist folder to S3
+      - name: Sync to S3
+        run: aws s3 sync dist/ s3://front-end-eflow --delete
 
-    - name: Invalidate CloudFront
-      run: |
-        aws cloudfront create-invalidation \
-        --distribution-id CLOUDFRONT_ID \
-        --paths "/*" || echo "Ignoring CloudFront invalidation errors"
+      # 9️⃣ Optional: Invalidate CloudFront cache
+      - name: Invalidate CloudFront
+        if: ${{ secrets.CLOUDFRONT_ID }}
+        run: |
+          aws cloudfront create-invalidation \
+          --distribution-id ${{ secrets.CLOUDFRONT_ID }} \
+          --paths "/*"

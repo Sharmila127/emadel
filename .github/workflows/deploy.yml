@@ -13,23 +13,27 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Install Node.js
-    - name: Setup Node
+    - name: Use Node 20
       uses: actions/setup-node@v3
       with:
-        node-version: '18'
+        node-version: 20
 
-    # Install dependencies safely (avoid integrity errors)
-    - name: Install dependencies
+    - name: Remove package-lock.json & node_modules
       run: |
-        npm cache clean --force
-        npm install --legacy-peer-deps
+        rm -f package-lock.json
+        rm -rf node_modules
 
-    # Build frontend
+    - name: Clean npm cache
+      run: npm cache clean --force
+
+    - name: Install dependencies (ignore errors)
+      run: |
+        npm install --legacy-peer-deps --force
+
     - name: Build project
-      run: npm run build
+      run: |
+        npm run build
 
-    # Configure AWS Credentials
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -37,12 +41,10 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
         aws-region: ap-south-1
 
-    # Upload build folder to S3 bucket
-    - name: Sync to S3
+    - name: Upload to S3
       run: |
         aws s3 sync build/ s3://front-end-eflow --delete
 
-    # CloudFront cache invalidation
     - name: Invalidate CloudFront Cache
       run: |
         aws cloudfront create-invalidation \

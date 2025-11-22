@@ -14,14 +14,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Use Node.js 20 (matches your package requirements)
+      # 2️⃣ Setup Node.js 20
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: "npm"
 
-      # 3️⃣ Remove old lock and node_modules (clean start)
+      # 3️⃣ Clean old node_modules and lockfile
       - name: Remove package-lock.json & node_modules
         run: |
           rm -f package-lock.json

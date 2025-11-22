@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
- 
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -13,18 +13,38 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Install dependencies
-      run: npm ci
+    # Install Node.js
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
 
+    # Install dependencies safely (avoid integrity errors)
+    - name: Install dependencies
+      run: |
+        npm cache clean --force
+        npm install --legacy-peer-deps
+
+    # Build frontend
     - name: Build project
       run: npm run build
 
+    # Configure AWS Credentials
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+        aws-region: ap-south-1
+
+    # Upload build folder to S3 bucket
     - name: Sync to S3
       run: |
         aws s3 sync build/ s3://front-end-eflow --delete
 
-    - name: Invalidate CloudFront
+    # CloudFront cache invalidation
+    - name: Invalidate CloudFront Cache
       run: |
         aws cloudfront create-invalidation \
-        --distribution-id CLOUDFRONT_ID \
+        --distribution-id ${{ secrets.CLOUDFRONT_ID }} \
         --paths "/*"

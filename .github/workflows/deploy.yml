@@ -13,34 +13,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # 1️⃣ Remove lockfile & node_modules
     - name: Remove package-lock.json & node_modules
       run: |
         rm -f package-lock.json
         rm -rf node_modules
 
-    # 2️⃣ Clean npm cache
     - name: Clean npm cache
       run: npm cache clean --force
 
-    # 3️⃣ Install dependencies without integrity check
     - name: Install dependencies (ignore errors)
       run: npm install --legacy-peer-deps --force
 
-    # 4️⃣ Disable TypeScript check in build command
     - name: Disable TypeScript check
       run: |
         sed -i 's/"build": "tsc -b && vite build"/"build": "vite build"/' package.json
 
-    # 5️⃣ Build the project
     - name: Build project
       run: npm run build
 
-    # 6️⃣ Deploy to S3
-    - name: Sync to S3
-      run: aws s3 sync build/ s3://front-end-eflow --delete
+    - name: Sync to S3 (dist folder)
+      run: |
+        aws s3 sync dist/ s3://front-end-eflow --delete
 
-    # 7️⃣ Invalidate CloudFront
     - name: Invalidate CloudFront
       run: |
         aws cloudfront create-invalidation \

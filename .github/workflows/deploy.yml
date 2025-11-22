@@ -10,49 +10,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js 20
+      # Step 2: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: "npm"
 
-      - name: Remove lockfile & node_modules
+      # Step 3: Remove package-lock.json & node_modules
+      - name: Remove package-lock.json & node_modules
         run: |
           rm -f package-lock.json
           rm -rf node_modules
 
+      # Step 4: Clean npm cache
       - name: Clean npm cache
         run: npm cache clean --force
 
-      - name: Install dependencies ignoring errors
-        run: npm install --legacy-peer-deps --force
-
-      - name: Build project (skip TS errors)
+      # Step 5: Install dependencies (ignore errors)
+      - name: Install dependencies
         run: |
-          echo "Skipping TS type checking"
-          npx vite build || echo "Vite build completed"
+          npm install --legacy-peer-deps --force
 
+      # Step 6: Build project
+      - name: Build project
+        run: npm run build
+
+      # Step 7: Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Sync dist folder to S3
+      # Step 8: Sync dist/ folder to S3
+      - name: Sync to S3
         run: aws s3 sync dist/ s3://front-end-eflow --delete
 
-      - name: Invalidate CloudFront (optional)
+      # Step 9: Invalidate CloudFront cache
+      - name: Invalidate CloudFront
         run: |
-          if [ -n "${CLOUDFRONT_ID}" ]; then
-            aws cloudfront create-invalidation \
-            --distribution-id "$CLOUDFRONT_ID" \
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_ID }} \
             --paths "/*"
-          else
-            echo "CLOUDFRONT_ID not set, skipping invalidation."
-          fi
-        env:
-          CLOUDFRONT_ID: ${{ secrets.CLOUDFRONT_ID }}

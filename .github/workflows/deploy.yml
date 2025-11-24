@@ -51,7 +51,7 @@ jobs:
 
       # Step 8: Sync dist/ folder to S3
       - name: Sync to S3
-        run: aws s3 sync dist/ s3://eflow-frontend --delete
+        run: aws s3 sync dist/ s3://eflow-bucket-01 --delete
 
       # Step 9: Invalidate CloudFront cache
       - name: Invalidate CloudFront

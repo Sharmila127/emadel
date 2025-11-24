@@ -34,11 +34,10 @@ jobs:
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps --force
-
       # Step 6: Build project (ignore TS errors)
       - name: Build project
         run: |
-           npx tsc --skipLibCheck || echo "Ignoring TS errors"
+          npx tsc --skipLibCheck || echo "Ignoring TS errors"
           npx vite build
 
       # Step 7: Configure AWS credentials

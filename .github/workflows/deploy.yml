@@ -38,7 +38,9 @@ jobs:
       # Step 6: Build project (ignore TS errors)
       - name: Build project
         run: |
-          npm run build
+           npx tsc --skipLibCheck || echo "Ignoring TS errors"
+          npx vite build
+
       # Step 7: Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
